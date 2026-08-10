@@ -1,27 +1,31 @@
-# 🏥 OmniFHIR AI
+# OmniFHIR AI
 
 <div align="center">
   <em>A Multi-Modal GenAI Clinical Abstraction Pipeline</em>
 </div>
 <br/>
 
-**OmniFHIR AI** is an advanced, fully local, multi-modal data pipeline designed to ingest noisy clinical documents (PDFs, handwritten faxes, faxes, text notes), extract critical clinical data points using vision models and LLMs, evaluate them against HEDIS compliance rules, and output standardized FHIR JSON bundles.
+**OmniFHIR AI** is a local, multi-modal pipeline built to extract clinical data from unstructured documents and evaluate HEDIS compliance. It ingests noisy clinical documents (PDFs, handwritten faxes, text notes), extracts critical data points using vision models and LLMs, evaluates them against predefined rules, and outputs standardized FHIR JSON bundles.
 
-It is built to demonstrate how open-weight AI (Ollama + Llama 3.2 Vision + Mistral) can automate clinical abstraction workflows securely and offline.
+It demonstrates how open-weight AI (Ollama + Llama 3.2 Vision + Mistral) can automate clinical abstraction workflows securely and offline.
 
 ---
 
-## ✨ Key Features
+## Assessment Context
 
-- 📄 **Multi-Modal Ingestion:** Supports `.txt`, `.pdf`, `.png`, `.jpg`, and multi-page `.tiff` files.
-- 👁️ **Dual-Channel OCR:** Uses `llama3.2-vision` for primary optical character recognition with a `tesseract` fallback for low-confidence reads.
-- 🧠 **GenAI Extraction:** Uses `mistral` (via Ollama) to structure raw text into patient demographics, lab names, values, units, and dates.
-- ⚖️ **HEDIS Rules Engine:** Automatically evaluates extracted lab results (e.g., HbA1c) against predefined clinical compliance thresholds.
-- 🔄 **FHIR Standardization:** Converts the extracted and evaluated data into compliant FHIR `Observation` JSON resources.
-- 📊 **Streamlit Dashboard:** Includes a modern web portal for Batch Processing, Document Queue management, Human-in-the-Loop (HITL) review, and data export.
-- 🔒 **100% Local & Secure:** All inference runs locally via Ollama, ensuring PHI never leaves the machine.
+This repository was built specifically as a Proof-of-Concept for the Generative AI / Agentic AI / Research Cotiviti Internship assessment. It aims to showcase an end-to-end understanding of clinical data pipelines, from multimodal OCR and local LLM extraction to HEDIS rule evaluation and FHIR standardization.
 
-## 🏗️ Architecture
+## Key Features
+
+- **Multi-Modal Ingestion:** Supports `.txt`, `.pdf`, `.png`, `.jpg`, and multi-page `.tiff` files.
+- **Dual-Channel OCR:** Uses `llama3.2-vision` for primary optical character recognition with a `tesseract` fallback for low-confidence reads.
+- **GenAI Extraction:** Uses `mistral` (via Ollama) to structure raw text into patient demographics, lab names, values, units, and dates.
+- **HEDIS Rules Engine:** Automatically evaluates extracted lab results (e.g., HbA1c) against predefined clinical compliance thresholds.
+- **FHIR Standardization:** Converts the extracted and evaluated data into compliant FHIR `Observation` JSON resources.
+- **Streamlit Dashboard:** Includes a modern web portal for Batch Processing, Document Queue management, Human-in-the-Loop (HITL) review, and data export.
+- **100% Local & Secure:** All inference runs locally via Ollama, ensuring PHI never leaves the machine.
+
+## Architecture
 
 The system operates in a linear 6-stage pipeline:
 
@@ -32,7 +36,7 @@ The system operates in a linear 6-stage pipeline:
 5. **Rules Engine:** Runs the extracted data against HEDIS compliance measures.
 6. **FHIR Output & Persist:** Generates the FHIR JSON and stores the provenance, status, and metrics in a local SQLite database.
 
-## 🚀 Quickstart
+## Quickstart
 
 ### Prerequisites
 - **Python 3.12+**
@@ -74,7 +78,7 @@ Run the pipeline headlessly on all files in the `sample_data/` directory:
 python -m src.pipeline
 ```
 
-## 🧪 Generating Sample Data
+## Generating Sample Data
 
 Need test data? The repository includes a robust synthetic data generator that creates noisy, realistic clinical documents (including corrupt files for testing error handling).
 
@@ -83,7 +87,7 @@ python generate_test_data.py
 ```
 This will populate the `sample_data/` folder with a mix of PDFs, DOCX, TXT, and image files simulating different clinical scenarios (e.g., handwritten lab slips, discharge summaries).
 
-## 📁 Repository Structure
+## Repository Structure
 
 ```text
 OmniFHIR-AI/
@@ -103,29 +107,27 @@ OmniFHIR-AI/
 └── requirements.txt
 ```
 
-## 🏢 Enterprise & Production Path
+## Path to Production
 
-While this repository serves as a fully functional local Proof-of-Concept, the underlying architecture is designed to act as a **flexible abstraction engine** that can be scaled for enterprise healthcare environments (such as Cotiviti's massive data processing pipelines). 
-
-Transitioning from this POC to a production-grade system involves the following architectural evolutions:
+While this repository is a functional local POC, the core architecture is designed to be extensible. If an organization like Cotiviti were to adapt this for large-scale production, here are a few ways the system could evolve:
 
 #### 1. Infrastructure & Orchestration
-*   **Microservices on Kubernetes:** The linear pipeline stages (Ingestion, OCR, Extraction, Rules, FHIR) can be decoupled into independent containerized microservices. This allows independent horizontal scaling (e.g., scaling the OCR nodes more heavily than the Rules Engine).
-*   **Message Brokers (Event-Driven):** Replace the synchronous batch processing with an event-driven architecture using **Apache Kafka** or **RabbitMQ**. Documents ingested via SFTP or API drop onto a Kafka topic, seamlessly feeding the distributed OCR and LLM worker nodes.
+*   **Microservices:** The pipeline stages (Ingestion, OCR, Extraction, Rules, FHIR) can be decoupled into containerized microservices (e.g., Kubernetes). This allows independent scaling, like spinning up more OCR nodes to handle image-heavy batches.
+*   **Event-Driven Ingestion:** Instead of synchronous batch processing, the system could tie into message brokers like Kafka or RabbitMQ. Documents dropped via SFTP or API would hit a topic and seamlessly feed the worker nodes.
 
-#### 2. Hybrid Model Hosting (Privacy & Scale)
-*   **Triage vs. Deep Extraction:** Implement a hybrid model deployment strategy. Small, fast models (like `llama3.2-vision`) run on-premise/VPC for initial triage and simple OCR. Highly complex edge-case documents are routed securely to managed, HIPAA-compliant private cloud models (e.g., Azure OpenAI, AWS Bedrock).
-*   **Data Sovereignty:** The pluggable backend ensures that PHI never crosses public internet boundaries, adhering strictly to enterprise BAA (Business Associate Agreement) requirements.
+#### 2. Model Hosting Strategies
+*   **Hybrid Deployments:** Small, fast models (like `llama3.2-vision`) could run on-premise for triage and simple OCR. Highly complex or edge-case documents could be routed securely to managed, HIPAA-compliant private cloud models (like Azure OpenAI or AWS Bedrock).
+*   **Privacy Guarantees:** By using pluggable backends, organizations can ensure PHI never crosses public internet boundaries, keeping everything within their VPC and compliant with BAAs.
 
-#### 3. Seamless Interoperability
-*   **Cotiviti Pipeline Integration:** The system can consume data directly from existing data lakes (Snowflake, Hadoop) or SFTP batch dumps, and output standard FHIR R4 JSON bundles into existing downstream analytics engines or Data Warehouses.
-*   **API Gateways:** REST/GraphQL APIs can be exposed for real-time, single-document abstraction requests from existing EMR/EHR front-ends.
+#### 3. Interoperability
+*   **Data Lake Integration:** The output layer can be wired to drop FHIR R4 JSON bundles directly into existing data warehouses (like Snowflake or Hadoop) for downstream analytics.
+*   **API Gateways:** REST or GraphQL APIs could be exposed so existing EMR/EHR front-ends can request real-time, single-document abstractions.
 
-#### 4. Ultimate Extensibility
-*   **Pluggable Model Backends:** The LLM client abstraction allows organizations to swap models instantaneously based on cost, speed, or accuracy requirements (e.g., swapping Mistral for Claude 3.5 Sonnet or a fine-tuned internal model).
-*   **Dynamic Rules Engine (No-Code):** The Python-based HEDIS rules engine can be extended into a UI-driven, dynamic rules system where clinical SMEs can define new measures, thresholds, and logic without writing code.
-*   **Custom NLP Plugins:** The pipeline allows for the injection of specialized Named Entity Recognition (NER) models for specific specialties (e.g., Oncology, Cardiology) to enhance the base LLM extraction.
+#### 4. Extensibility
+*   **Pluggable Models:** The LLM client abstraction makes it easy to swap models based on cost or accuracy (e.g., testing Claude 3.5 Sonnet against a fine-tuned internal model).
+*   **Dynamic Rules Engine:** The Python-based rules engine could be extended with a UI, allowing clinical SMEs to define new HEDIS measures and thresholds without needing to write code.
+*   **Custom NLP:** The pipeline could inject specialized Named Entity Recognition (NER) models for specific specialties (like Oncology) to improve the base LLM's accuracy.
 
-## 📝 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
