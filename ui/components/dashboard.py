@@ -76,12 +76,22 @@ def render_dashboard():
         if confidence is not None and confidence < 0.7:
             conf_display = f"⚠️ {conf_display}"
 
+        # If failed, override text fields to make it obvious
+        patient_display = doc.get("patient_id", "—")
+        test_val_display = f"{doc['test_value']}{doc.get('test_unit', '%')}" if doc.get("test_value") else "—"
+        
+        if status == "FAILED":
+            patient_display = "❌ Processing Failed"
+            test_val_display = "—"
+            conf_display = "—"
+            review_badge = render_badge("—", "pending")
+
         rows.append({
             "doc_id": doc["doc_id"],
             "filename": doc["filename"],
             "type": doc.get("file_type", ""),
-            "patient_id": doc.get("patient_id", "—"),
-            "test_value": f"{doc['test_value']}{doc.get('test_unit', '%')}" if doc.get("test_value") else "—",
+            "patient_id": patient_display,
+            "test_value": test_val_display,
             "confidence": confidence,
             "confidence_display": conf_display,
             "compliance": compliance,
