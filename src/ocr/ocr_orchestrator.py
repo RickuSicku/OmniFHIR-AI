@@ -8,9 +8,13 @@ Pipeline:
 3. If both ran → cross-check with fuzzy matching, flag discrepancies
 """
 import logging
+import os
+import tempfile
 from dataclasses import dataclass, field
 from difflib import SequenceMatcher
 from typing import Optional
+
+from PIL import Image
 
 from src.config import CONFIDENCE_THRESHOLD, OCR_DISCREPANCY_THRESHOLD
 from src.ocr.vision_extractor import extract_text_with_vision, VisionOCRResult
@@ -56,12 +60,63 @@ def _compute_similarity(text_a: str, text_b: str) -> float:
     return SequenceMatcher(None, norm_a, norm_b).ratio()
 
 
+def _is_multipage_tiff(image_path: str) -> bool:
+    """Check if the image is a multi-page TIFF."""
+    ext = os.path.splitext(image_path)[1].lower()
+    if ext not in (".tiff", ".tif"):
+        return False
+    try:
+        img = Image.open(image_path)
+        img.seek(1)  # Try to access frame 1 (0-indexed)
+        return True
+    except EOFError:
+        return False  # Only 1 page
+    except Exception:
+        return False
+
+
+def _split_tiff_pages(image_path: str) -> list[str]:
+    """Split a multi-page TIFF into individual temporary PNG files.
+
+    Args:
+        image_path: Path to the multi-page TIFF file.
+
+    Returns:
+        List of temporary PNG file paths (caller must clean up).
+    """
+    img = Image.open(image_path)
+    temp_paths = []
+    frame_idx = 0
+
+    while True:
+        try:
+            img.seek(frame_idx)
+            # Convert to RGB if needed (TIFF can be various modes)
+            page = img.copy()
+            if page.mode != "RGB":
+                page = page.convert("RGB")
+
+            temp_path = os.path.join(
+                tempfile.gettempdir(),
+                f"omnifhir_tiff_page_{frame_idx}_{os.getpid()}.png",
+            )
+            page.save(temp_path, "PNG")
+            temp_paths.append(temp_path)
+            logger.info(f"Extracted TIFF page {frame_idx + 1} -> {temp_path}")
+            frame_idx += 1
+        except EOFError:
+            break
+
+    return temp_paths
+
+
 def run_ocr(image_path: str) -> OCRResult:
     """Execute the dual-channel OCR pipeline on an image.
 
-    1. Attempt vision model OCR (primary).
-    2. If vision confidence < threshold, fall back to Tesseract.
-    3. If both results exist, cross-validate and flag discrepancies.
+    1. If multi-page TIFF, split into pages and OCR each separately.
+    2. Attempt vision model OCR (primary).
+    3. If vision confidence < threshold, fall back to Tesseract.
+    4. If both results exist, cross-validate and flag discrepancies.
 
     Args:
         image_path: Absolute path to the image file.
@@ -69,6 +124,11 @@ def run_ocr(image_path: str) -> OCRResult:
     Returns:
         OCRResult with the best extracted text and audit metadata.
     """
+    # ── Multi-page TIFF handling ────────────────────────────────────────
+    if _is_multipage_tiff(image_path):
+        logger.info(f"Detected multi-page TIFF: {image_path}")
+        return _run_ocr_multipage_tiff(image_path)
+
     result = OCRResult(
         final_text="",
         final_confidence=0.0,
@@ -146,3 +206,61 @@ def run_ocr(image_path: str) -> OCRResult:
         result.final_confidence = 0.0
 
     return result
+
+
+def _run_ocr_multipage_tiff(image_path: str) -> OCRResult:
+    """Handle multi-page TIFF by OCR-ing each page and combining results.
+
+    Splits the TIFF into individual page PNGs, runs the standard OCR
+    pipeline on each page, then concatenates text and averages confidence.
+
+    Args:
+        image_path: Path to the multi-page TIFF file.
+
+    Returns:
+        Combined OCRResult with text from all pages.
+    """
+    temp_pages = _split_tiff_pages(image_path)
+    logger.info(f"Split TIFF into {len(temp_pages)} page(s)")
+
+    all_texts = []
+    all_confidences = []
+    all_flags = []
+    primary_source = "vision"
+
+    try:
+        for i, page_path in enumerate(temp_pages):
+            logger.info(f"OCR-ing TIFF page {i + 1}/{len(temp_pages)}")
+            page_result = run_ocr(page_path)  # Recursive call for single page
+
+            if page_result.final_text.strip():
+                all_texts.append(f"--- PAGE {i + 1} ---\n{page_result.final_text}")
+                all_confidences.append(page_result.final_confidence)
+            else:
+                all_texts.append(f"--- PAGE {i + 1} ---\n[No text extracted]")
+
+            all_flags.extend(page_result.flags)
+            if page_result.primary_source == "tesseract":
+                primary_source = "tesseract"
+    finally:
+        # Clean up temp files
+        for page_path in temp_pages:
+            try:
+                os.remove(page_path)
+            except OSError:
+                pass
+
+    combined_text = "\n\n".join(all_texts)
+    avg_confidence = (
+        sum(all_confidences) / len(all_confidences)
+        if all_confidences
+        else 0.0
+    )
+
+    return OCRResult(
+        final_text=combined_text,
+        final_confidence=round(avg_confidence, 3),
+        primary_source=primary_source,
+        fallback_triggered=any("TESSERACT" in f or "FALLBACK" in f for f in all_flags),
+        flags=all_flags + [f"MULTIPAGE_TIFF: {len(temp_pages)} pages processed"],
+    )

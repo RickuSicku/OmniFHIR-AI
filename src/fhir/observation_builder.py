@@ -185,7 +185,7 @@ def _build_extensions(
     extensions.append(
         Extension(
             url=EXT_PROCESSING_TIMESTAMP,
-            valueDateTime=datetime.utcnow().isoformat(),
+            valueDateTime=datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S+00:00"),
         )
     )
 

@@ -288,8 +288,8 @@ def process_single_document(
     result["compliance"] = compliance.status if compliance else "N/A"
 
     logger.info(
-        f"✓ Completed: {filename} → {primary.test_name}={primary.test_value}{primary.test_unit} "
-        f"→ {compliance.status if compliance else 'No rule matched'}"
+        f"[OK] Completed: {filename} -> {primary.test_name}={primary.test_value}{primary.test_unit} "
+        f"-> {compliance.status if compliance else 'No rule matched'}"
     )
 
     return result
@@ -377,5 +377,5 @@ if __name__ == "__main__":
         print(f"Success: {summary['success']}")
         print(f"Failed: {summary['failed']}")
         for r in summary["results"]:
-            status_icon = "✓" if r["status"] == STATUS_COMPLETED else "✗"
+            status_icon = "[OK]" if r["status"] == STATUS_COMPLETED else "[FAIL]"
             print(f"  {status_icon} {r['filename']}: {r.get('compliance', r.get('error', 'N/A'))}")
