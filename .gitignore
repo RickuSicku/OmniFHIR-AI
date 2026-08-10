@@ -92,3 +92,8 @@ htmlcov/
 .coverage.*
 nosetests.xml
 syslog
+
+# Data / Databases
+*.db
+*.db-*
+data/omnifhir.db*
