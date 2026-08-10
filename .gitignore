@@ -97,3 +97,7 @@ syslog
 *.db
 *.db-*
 data/omnifhir.db*
+
+# Generated Sample Data
+sample_data/*
+!sample_data/.gitkeep
