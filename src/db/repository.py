@@ -464,6 +464,7 @@ def get_export_data() -> list[dict]:
                 d.file_type,
                 d.modality,
                 d.status AS processing_status,
+                d.error_message,
                 e.patient_id,
                 e.test_name,
                 e.test_value,
