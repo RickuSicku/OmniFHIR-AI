@@ -100,15 +100,16 @@ def render_detail_view(doc_id: int):
             unsafe_allow_html=True,
         )
 
-        if fhir_output:
-            try:
-                fhir_data = json.loads(fhir_output["fhir_json"])
-                formatted = json.dumps(fhir_data, indent=2)
-                st.code(formatted, language="json")
-            except json.JSONDecodeError:
-                st.code(fhir_output["fhir_json"], language="json")
-        else:
-            st.info("No FHIR output generated.")
+        with st.container(height=400):
+            if fhir_output:
+                try:
+                    fhir_data = json.loads(fhir_output["fhir_json"])
+                    formatted = json.dumps(fhir_data, indent=2)
+                    st.code(formatted, language="json")
+                except json.JSONDecodeError:
+                    st.code(fhir_output["fhir_json"], language="json")
+            else:
+                st.info("No FHIR output generated.")
 
         # Extraction summary
         if extraction:
@@ -165,19 +166,19 @@ def render_detail_view(doc_id: int):
         btn_cols = st.columns(3)
 
         with btn_cols[0]:
-            if st.button("✅ Approve", key=f"approve_{doc_id}", type="primary"):
+            if st.button("Approve", key=f"approve_{doc_id}", type="primary", use_container_width=True):
                 repo.create_review(doc_id, REVIEW_APPROVED, reviewer_notes)
                 st.success("Document approved!")
                 st.rerun()
 
         with btn_cols[1]:
-            if st.button("❌ Reject", key=f"reject_{doc_id}"):
+            if st.button("Reject", key=f"reject_{doc_id}", use_container_width=True):
                 repo.create_review(doc_id, REVIEW_REJECTED, reviewer_notes)
                 st.warning("Document rejected.")
                 st.rerun()
 
         with btn_cols[2]:
-            if st.button("🚩 Flag", key=f"flag_{doc_id}"):
+            if st.button("Flag", key=f"flag_{doc_id}", use_container_width=True):
                 repo.create_review(doc_id, REVIEW_FLAGGED, reviewer_notes)
                 st.info("Document flagged for further review.")
                 st.rerun()

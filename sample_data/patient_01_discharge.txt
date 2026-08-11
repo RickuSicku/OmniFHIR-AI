@@ -1,0 +1,44 @@
+PATIENT VISIT NOTE
+===================================================================
+
+Patient Name: John Doe
+Date of Birth: 1968-05-14
+Patient ID: PT-10492
+Date of Service: 2026-03-12
+Provider: Dr. Amanda Chen, MD — Internal Medicine
+Facility: Riverside Community Health Center
+
+CHIEF COMPLAINT:
+Routine diabetic follow-up appointment.
+
+HISTORY OF PRESENT ILLNESS:
+Mr. Doe is a 57-year-old male with a 12-year history of Type 2 Diabetes
+Mellitus. He presents today for his scheduled quarterly diabetic evaluation.
+Patient reports good medication adherence with Metformin 1000mg BID and
+Glipizide 5mg daily. He denies any episodes of hypoglycemia, polyuria,
+or polydipsia since his last visit. He has been monitoring his blood
+glucose at home 2-3 times per week with readings ranging from 110-145 mg/dL
+fasting.
+
+PHYSICAL EXAMINATION:
+- Vitals: BP 128/78, HR 72, Temp 98.4F, Weight 198 lbs
+- General: Well-appearing, no acute distress
+- Extremities: No peripheral edema, pedal pulses 2+ bilaterally
+- Neurological: Monofilament testing normal bilateral feet
+
+LABORATORY DATA:
+Point-of-care Hemoglobin A1c test drawn today shows HbA1c of 7.2%.
+Fasting glucose: 128 mg/dL.
+
+ASSESSMENT:
+Type 2 Diabetes Mellitus — well controlled on current regimen.
+
+PLAN:
+1. Continue Metformin 1000mg BID.
+2. Continue Glipizide 5mg daily.
+3. Annual dilated eye exam — due next month, referral sent.
+4. Recheck HbA1c in 3 months.
+5. Continue home glucose monitoring.
+
+Electronically signed by Dr. Amanda Chen, MD
+Date: 2026-03-12

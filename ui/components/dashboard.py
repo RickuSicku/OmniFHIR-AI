@@ -135,6 +135,18 @@ def render_dashboard():
                 st.markdown(row["compliance_badge"], unsafe_allow_html=True)
 
             with cols[6]:
-                st.markdown(row["review_badge"], unsafe_allow_html=True)
+                # If pending review, show buttons instead of a static badge
+                if row["status"] != "FAILED" and row["review"] == "PENDING_REVIEW":
+                    if row["confidence"] is not None and row["confidence"] >= 0.7:
+                        if st.button("Approve", key=f"fast_approve_{row['doc_id']}", type="primary", use_container_width=True):
+                            repo.create_review(row["doc_id"], "APPROVED", "Fast-approved from dashboard")
+                            st.rerun()
+                    else:
+                        if st.button("Review Required", key=f"needs_review_{row['doc_id']}", use_container_width=True):
+                            st.session_state["selected_doc_id"] = row["doc_id"]
+                            st.session_state["page"] = "detail"
+                            st.rerun()
+                else:
+                    st.markdown(row["review_badge"], unsafe_allow_html=True)
 
             st.markdown("---")
