@@ -81,7 +81,7 @@ def render_dashboard():
         test_val_display = f"{doc['test_value']}{doc.get('test_unit', '%')}" if doc.get("test_value") else "—"
         
         if status == "FAILED":
-            patient_display = "❌ Processing Failed"
+            patient_display = "❌ Failed"
             test_val_display = "—"
             conf_display = "—"
             review_badge = render_badge("—", "pending")
